@@ -1,9 +1,18 @@
 
-def str2hex(text):
-	str_64 = bytes(text,encoding='utf8')
-	b=  bin(int(str_64.hex(),16))[2:]  #hex to bin
-	return b 
-print(str2hex('中文'))
+def str2bin(text):
+	if text.isdigit() or text.isalpha():
+		return '0'*(8-len(bin(ord(text))[2:]))+bin(ord(text))[2:]
+	else:
+		str_hex = text.encode('utf8')
+		return bin(int(str_hex.hex(),16))[2:]  #hex to bin
+
+def _str2bin(texts):
+	_bin = ''
+	for t in texts:
+		_bin += str2bin(t)
+	return _bin
+
+print(_str2bin('b'))
 
 # 现在计算机中，在内存中采用unicode编码方式。
 # 这是因为t是采用utf-8来编码，而utf-8与unicode编码中的字符部分的编码方式是一样的，
