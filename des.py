@@ -182,18 +182,30 @@ def exclusive_or(text1,text2):
 				text += '1'
 		return text
 
-plaintext = input('明文：')
-ciphertext = input('密文：')
+def my_bin(num):
+    la = []
+    if num < 0:
+        return '-' + my_bin(abs(num))
+    while True:
+        num, remainder = divmod(num, 2)
+        la.append(str(remainder))
+        if num == 0:
+            return ''.join(la[::-1])
+
+
+plaintext = '12345678'#input('明文：')
+ciphertext = '12345678'#input('密文：')
 plaintext = _str2bin(plaintext)
 swaped_plaintext = swap(plaintext,IP_table)
 l0 = swaped_plaintext[:32]
 r0 = swaped_plaintext[32:]
 l_list = []
 r_list = []
-l_list.append(l0)
-r_list.append(r0)
+l_list.append(''.join(l0))
+r_list.append(''.join(r0))
 
 ciphertext = _str2bin(ciphertext)
+print(ciphertext)
 # rm_parity_ciphertext = rm_parity(ciphertext)
 swaped_ciphertext = swap(ciphertext,swap_table1)
 # print(swaped_ciphertext)
@@ -214,10 +226,26 @@ for step in move_table:
 	# e 
 	eo = exclusive_or(e,k)
 	# exclusive_or
-	s_fragment = re.findall(r'.{8}', eo)
-	print(s_fragment)
+	s_fragment = re.findall(r'.{6}', eo)
+	s_result = ''
+	for s in s_fragment:
+		index = s_fragment.index(s)
+		s1 = int(s[0] + s[5],2)
+		s2 = int(s[1:5],2)
+		b = my_bin(S[index-1][s1*16+s2])	
+		s_result += '0'*(4-len(b)) + b
+	# s
+	p_result = ''.join(swap(s_result,P_table))
+	p_result = exclusive_or(l_list[idx-1],p_result)
+	# p
+	r = p_result
 	l_list.append(l)
 	r_list.append(r)
+
+r16l16 = r_list[16] + l_list[16]
+ciphertext = ''.join(swap(r16l16,_IP_table)) 
+encrypted_ciphertext = hex(int(ciphertext))
+print(encrypted_ciphertext)
 
 
 	# d_list.append(d)	
