@@ -1,7 +1,11 @@
 import re
 from flask import Flask, abort, request, redirect, render_template, jsonify
 import copy
-from flask_script import Manager
+from werkzeug.utils import secure_filename
+import os
+from flask_uploads import UploadSet, IMAGES
+from flask_uploads import configure_uploads, patch_request_class
+
 
 IP_table=[58, 50, 42, 34, 26, 18, 10,  2,
   60, 52, 44, 36, 28, 20, 12,  4,
@@ -135,7 +139,8 @@ def _str2bin(texts):
 	_bin = ''
 	for t in texts:
 		_bin += str2bin(t)
-	_bin = '00100000'* ((64-len(_bin))//8)+_bin
+	space_num= int((len(_bin)%64)/8)
+	_bin += '00100000'* space_num
 	return _bin
 
 def bin2str(text):
@@ -222,8 +227,8 @@ def processkey(swaped_ciphertext):
 	return resultKey
 
 def des(plaintext,ciphertext,encyrpt):
-	if encyrpt:
-		plaintext = _str2bin(plaintext)
+	# if encyrpt:
+	# 	plaintext = _str2bin(plaintext)
 	ciphertext = _str2bin(ciphertext)
 	# plaintext = '0000000100100011010001010110011110001001101010111100110111101111'
 	swaped_plaintext = swap(plaintext,IP_table)
@@ -268,13 +273,54 @@ def des(plaintext,ciphertext,encyrpt):
 	ciphertext = ''.join(swap(r16l16,_IP_table)) 
 	return ciphertext
 # encrypted_ciphertext = hex(int(ciphertext))
+t1 = ''
+t2 = ''
+text = '中文中中文'
+for t in re.findall(r'.{64}',_str2bin(text)):
+	t1 += des(t,'12345678',True)
+for t in re.findall(r'.{64}',_str2bin(text)):
+	t2 += des(t,'12345678',True)
 
-t1 = des('中文','12345678',True)
-t2 = des(t1,'12345678',False)
-t3 = bin2str(t2)
-print(t3)
+print(bin2str(t2[:64]))
+# t2 = des(t1,'12345678',False)
 
-# print(bin2str(t))
+# t3 = bin2str(t2)
+# print(t3)
+# print(len(_str2bin('中文中')))
+
+
+ 
+
+app = Flask('des')
+ 
+@app.route('/upload', methods=['POST', 'GET'])
+def upload():
+	if request.method == 'POST':
+		act = request.form.get('encrypt')
+		key = request.form.get('key')
+		f = request.files['file']
+		fname = secure_filename(f.filename)
+		ext = fname.rsplit('.',1)[1]  # 获取文件后缀
+		new_filename = '11'+'.'+ext  # 修改了上传的文件名
+		abspath = os.path.join('static/upload',new_filename)
+		f.save(abspath)  #保存文件到upload目录
+		f = open(abspath)
+		text = ''
+		for line in f.readlines():
+			text += line
+		if act == '加密':
+			for text in re.findall(r'.{64}',_str2bin(text)):
+				result = des(text,key,True)
+		else:
+			result = bin2str(des(text,key,False))
+
+		return render_template('upload.html',action='加密结果',result=result)
+	return render_template('upload.html')
+
+
+# if __name__ == '__main__':
+# 	app.run(debug=True,port=5000)
+
 # 现在计算机中，在内存中采用unicode编码方式。
 # 这是因为t是采用utf-8来编码，而utf-8与unicode编码中的字符部分的编码方式是一样的，
 # 在显示t的时候，在内存中采用unicode解码，而两种编码方式的字符部分一样，因此显示并没有什么区别。

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>选择加密文件</h1>
+    <form action="" enctype='multipart/form-data' method='POST'>
+         <input type="file" name="file">
+         key:<input type="text" name="key">
+         <input type="submit" name="encrypt" value="加密">
+         <input type="submit" name="decrypt" value="解密">
+    </form>
+    <h2>{{ action }}<h2>
+    <b>{{ result }}
+</body>
+</html>
