@@ -130,6 +130,7 @@ def _str2bin(texts):
 	_bin = ''
 	for t in texts:
 		_bin += str2bin(t)
+	# _bin = '00100000'* ((64-len(_bin))//8)+_bin
 	return _bin
 
 def bin2str(text):
@@ -137,7 +138,6 @@ def bin2str(text):
 	t2 = hex(int(t,2))
 	t3 = t2.replace('0x','')
 	t4 = bytes().fromhex(t3)
-	print(t4)
 	return t4.decode('utf-8')
 
 def swap(text,table):
@@ -195,27 +195,47 @@ def exclusive_or(text1,text2):
 		return text
 
 def my_bin(num):
-    la = []
-    if num < 0:
-        return '-' + my_bin(abs(num))
-    while True:
-        num, remainder = divmod(num, 2)
-        la.append(str(remainder))
-        if num == 0:
-            return ''.join(la[::-1])
+	la = []
+	if num < 0:
+		return '-' + my_bin(abs(num))
+	while True:
+		num, remainder = divmod(num, 2)
+		la.append(str(remainder))
+		if num == 0:
+			return ''.join(la[::-1])
 
+def processkey(swaped_ciphertext):
+	leftKey = swaped_ciphertext[:28]
+	rightKey = swaped_ciphertext[28:]
+	resultKey = []
+	for num in move_table:
+		tempLeft = leftKey[num:len(leftKey)]
+		tempRight = rightKey[num:len(rightKey)]
+		if num==1:
+			tempLeft.append(leftKey[0])
+			tempRight.append(rightKey[0])
+		else:
+			tempLeft.append(leftKey[0])
+			tempLeft.append(leftKey[1])
+			tempRight.append(rightKey[0])
+			tempRight.append(rightKey[1])
+		leftKey = tempLeft
+		rightKey = tempRight
+		tempKey = tempLeft + tempRight
+		result = ""
+		for num in swap_table2:
+			result = result + tempKey[num-1]
+		resultKey.append(result)
+	return resultKey
 
-plaintext = '12345678'#input('明文：')
-ciphertext = '12345678'#input('密文：')
 def des(plaintext,ciphertext,encyrpt):
 	if encyrpt:
 		plaintext = _str2bin(plaintext)
 	ciphertext = _str2bin(ciphertext)
-	print((plaintext))
-	print((ciphertext))
 	# plaintext = '0000000100100011010001010110011110001001101010111100110111101111'
 	swaped_plaintext = swap(plaintext,IP_table)
 	l0 = swaped_plaintext[:32]
+
 	r0 = swaped_plaintext[32:]
 	l_list = []
 	r_list = []
@@ -227,23 +247,22 @@ def des(plaintext,ciphertext,encyrpt):
 
 	# rm_parity_ciphertext = rm_parity(ciphertext)
 	swaped_ciphertext = swap(ciphertext,swap_table1)
-	# print(swaped_ciphertext)
-	c = swaped_ciphertext[:28]
-	d = swaped_ciphertext[28:]
-	k_list = [] # 48位
+
+	k_list = processkey(swaped_ciphertext)
+	# k_list = [] # 48位
 	for step in move_table:
 		idx = move_table.index(step)
-		c = move(c,'left',step)
-		# c_list.append(c)
-		d = move(d,'left',step)
-		cd = c + d
-		k = swap(cd,swap_table2)
+		# c = move(c,'left',step)
+		# # c_list.append(c)
+		# d = move(d,'left',step)
+		# cd = c + d
+		# k = swap(cd,swap_table2)
 		# k_list.append(swap(cd,swap_table2))
 		l = r_list[idx-1]
 		# r = l_list[idx-1]
 		e = swap(r_list[idx-1],extend_table) # 48
 		# e 
-		eo = exclusive_or(e,k)
+		eo = exclusive_or(e,k_list[idx])
 		# exclusive_or
 		s_fragment = re.findall(r'.{6}', eo)
 		s_result = ''
@@ -251,27 +270,27 @@ def des(plaintext,ciphertext,encyrpt):
 			index = s_fragment.index(s)
 			s1 = int(s[0] + s[5],2)
 			s2 = int(s[1:5],2)
-			b = my_bin(S[index-1][s1*16+s2])	
+			b = my_bin(S[index][s1*16+s2])	
 			s_result += '0'*(4-len(b)) + b
-			# print(S[index-1][s1*16+s2])
 		# s
-		# print(s_result)
 		p_result = ''.join(swap(s_result,P_table))
 		p_result = exclusive_or(l_list[idx-1],p_result)
 		# p
 		r = p_result
 		l_list.append(l)
 		r_list.append(r)
-
 	r16l16 = r_list[16] + l_list[16]
+	# print('11')
+	# print(r16l16)
 	ciphertext = ''.join(swap(r16l16,_IP_table)) 
 	return ciphertext
 # encrypted_ciphertext = hex(int(ciphertext))
 
-t1 = des('12345678','12345678',True)
-# # print(t1)
+# t = _str2bin('98765432')
+# print(t)
+t1 = des('aaaaaaaa','12345678',True)
 t2 = des(t1,'12345678',False)
-print(t2)
+
 t3 = bin2str(t2)
 print(t3)
 	
