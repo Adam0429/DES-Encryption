@@ -120,17 +120,22 @@ extend_table=[32,  1,  2,  3,  4,  5,
 move_table=[1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1]
 
 def str2bin(text):
-	if text.isdigit() or text.isalpha():
-		return '0'*(8-len(bin(ord(text))[2:]))+bin(ord(text))[2:]
-	else:
-		str_hex = text.encode('utf8')
-		return bin(int(str_hex.hex(),16))[2:]  #hex to bin
+	i_by = bytes(text, encoding = "utf-8")
+	_bin = ''
+	for i_bin in i_by:
+		i_b = bin(i_bin)
+		i_b = i_b.replace('0b','')
+		i_b = '0' * (8-len(i_b)) + i_b
+		_bin += i_b
+	return _bin
+		# str_hex = text.encode('utf8')
+		# return bin(int(str_hex.hex(),16))[2:]  #hex to bin
 
 def _str2bin(texts):
 	_bin = ''
 	for t in texts:
 		_bin += str2bin(t)
-	# _bin = '00100000'* ((64-len(_bin))//8)+_bin
+	_bin = '00100000'* ((64-len(_bin))//8)+_bin
 	return _bin
 
 def bin2str(text):
@@ -205,26 +210,14 @@ def my_bin(num):
 			return ''.join(la[::-1])
 
 def processkey(swaped_ciphertext):
-	leftKey = swaped_ciphertext[:28]
-	rightKey = swaped_ciphertext[28:]
+	leftKey = ''.join(swaped_ciphertext[:28])
+	rightKey = ''.join(swaped_ciphertext[28:])
 	resultKey = []
 	for num in move_table:
-		tempLeft = leftKey[num:len(leftKey)]
-		tempRight = rightKey[num:len(rightKey)]
-		if num==1:
-			tempLeft.append(leftKey[0])
-			tempRight.append(rightKey[0])
-		else:
-			tempLeft.append(leftKey[0])
-			tempLeft.append(leftKey[1])
-			tempRight.append(rightKey[0])
-			tempRight.append(rightKey[1])
-		leftKey = tempLeft
-		rightKey = tempRight
-		tempKey = tempLeft + tempRight
-		result = ""
-		for num in swap_table2:
-			result = result + tempKey[num-1]
+		leftKey = move(leftKey,'left',num)
+		rightKey = move(rightKey,'left',num)
+		tempKey = leftKey + rightKey
+		result = swap(tempKey,swap_table2)
 		resultKey.append(result)
 	return resultKey
 
@@ -242,22 +235,12 @@ def des(plaintext,ciphertext,encyrpt):
 	l_list.append(''.join(l0))
 	r_list.append(''.join(r0))
 
-	# ciphertext = _str2bin(ciphertext)
-	# ciphertext = '0001001100110100010101110111100110011011101111001101111111110001'
-
-	# rm_parity_ciphertext = rm_parity(ciphertext)
 	swaped_ciphertext = swap(ciphertext,swap_table1)
 
 	k_list = processkey(swaped_ciphertext)
 	# k_list = [] # 48位
 	for step in move_table:
 		idx = move_table.index(step)
-		# c = move(c,'left',step)
-		# # c_list.append(c)
-		# d = move(d,'left',step)
-		# cd = c + d
-		# k = swap(cd,swap_table2)
-		# k_list.append(swap(cd,swap_table2))
 		l = r_list[idx-1]
 		# r = l_list[idx-1]
 		e = swap(r_list[idx-1],extend_table) # 48
@@ -286,14 +269,12 @@ def des(plaintext,ciphertext,encyrpt):
 	return ciphertext
 # encrypted_ciphertext = hex(int(ciphertext))
 
-# t = _str2bin('98765432')
-# print(t)
-t1 = des('aaaaaaaa','12345678',True)
+t1 = des('中文','12345678',True)
 t2 = des(t1,'12345678',False)
-
 t3 = bin2str(t2)
 print(t3)
-	
+
+# print(bin2str(t))
 # 现在计算机中，在内存中采用unicode编码方式。
 # 这是因为t是采用utf-8来编码，而utf-8与unicode编码中的字符部分的编码方式是一样的，
 # 在显示t的时候，在内存中采用unicode解码，而两种编码方式的字符部分一样，因此显示并没有什么区别。
