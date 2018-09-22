@@ -131,7 +131,11 @@ def str2bin(text):
 		i_b = i_b.replace('0b','')
 		i_b = '0' * (8-len(i_b)) + i_b
 		_bin += i_b
+	space_num= int((64-len(_bin))/8)
+	_bin += '00000000'* space_num	
 	return _bin
+
+	# 由于des加密是64位一加密，中文字节24位，字符18位，为了方便将一个编码统一补全位64位
 		# str_hex = text.encode('utf8')
 		# return bin(int(str_hex.hex(),16))[2:]  #hex to bin
 
@@ -139,8 +143,8 @@ def _str2bin(texts):
 	_bin = ''
 	for t in texts:
 		_bin += str2bin(t)
-	space_num= int((len(_bin)%64)/8)
-	_bin += '00100000'* space_num
+	# space_num= int((len(_bin)%64)/8)
+	# _bin += '00100000'* space_num
 	return _bin
 
 def bin2str(text):
@@ -226,7 +230,7 @@ def processkey(swaped_ciphertext):
 		resultKey.append(result)
 	return resultKey
 
-def des(plaintext,ciphertext,encyrpt):
+def des(plaintext,ciphertext):
 	# if encyrpt:
 	# 	plaintext = _str2bin(plaintext)
 	ciphertext = _str2bin(ciphertext)
@@ -268,26 +272,22 @@ def des(plaintext,ciphertext,encyrpt):
 		l_list.append(l)
 		r_list.append(r)
 	r16l16 = r_list[16] + l_list[16]
-	# print('11')
-	# print(r16l16)
 	ciphertext = ''.join(swap(r16l16,_IP_table)) 
 	return ciphertext
 # encrypted_ciphertext = hex(int(ciphertext))
-t1 = ''
-t2 = ''
-text = '中文中中文'
-for t in re.findall(r'.{64}',_str2bin(text)):
-	t1 += des(t,'12345678',True)
-for t in re.findall(r'.{64}',_str2bin(text)):
-	t2 += des(t,'12345678',True)
 
-print(bin2str(t2[:64]))
-# t2 = des(t1,'12345678',False)
-
-# t3 = bin2str(t2)
-# print(t3)
-# print(len(_str2bin('中文中')))
-
+def _des(text,key,action):
+	result = ''
+	if action == 1:
+		for t in re.findall(r'.{64}',_str2bin(text)):
+			t = des(t,key)
+			result += t
+		return result
+	else:
+		for t in re.findall(r'.{64}',text):
+			t = des(t,key)
+			result += bin2str(t)
+		return result
 
  
 
@@ -309,17 +309,17 @@ def upload():
 		for line in f.readlines():
 			text += line
 		if act == '加密':
-			for text in re.findall(r'.{64}',_str2bin(text)):
-				result = des(text,key,True)
+			t = _des(text,key,1)
+			result = t
 		else:
-			result = bin2str(des(text,key,False))
-
-		return render_template('upload.html',action='加密结果',result=result)
+			act = '解密'
+			result = _des(text,key,0)
+		return render_template('upload.html',action=act+'结果',result=result)
 	return render_template('upload.html')
 
 
-# if __name__ == '__main__':
-# 	app.run(debug=True,port=5000)
+if __name__ == '__main__':
+	app.run(debug=True,port=5000)
 
 # 现在计算机中，在内存中采用unicode编码方式。
 # 这是因为t是采用utf-8来编码，而utf-8与unicode编码中的字符部分的编码方式是一样的，
