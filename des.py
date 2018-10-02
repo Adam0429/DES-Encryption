@@ -134,10 +134,10 @@ def str2bin(text):
 	space_num= int((64-len(_bin))/8)
 	_bin += '00000000'* space_num	
 	return _bin
-
+	# str转为utf8编码的二进制
 	# 由于des加密是64位一加密，中文字节24位，字符18位，为了方便将一个编码统一补全位64位
-		# str_hex = text.encode('utf8')
-		# return bin(int(str_hex.hex(),16))[2:]  #hex to bin
+	# str_hex = text.encode('utf8')
+	# return bin(int(str_hex.hex(),16))[2:]  #hex to bin
 
 def _str2bin(texts):
 	_bin = ''
@@ -146,6 +146,7 @@ def _str2bin(texts):
 	# space_num= int((len(_bin)%64)/8)
 	# _bin += '00100000'* space_num
 	return _bin
+
 
 def bin2str(text):
 	t = '0b'+str(text)
@@ -287,6 +288,11 @@ def _des(text,key,action):
 		for t in re.findall(r'.{64}',text):
 			t = des(t,key)
 			result += bin2str(t)
+			new_result = ''
+			for r in result:
+				if r != '\x00':         # 因为我用空字符补全每个字符，所以解密时候实际上是有空字符存在，只是仅在内存中看到
+					new_result += r
+			result = new_result
 		return result
 
  
