@@ -123,7 +123,7 @@ extend_table=[32,  1,  2,  3,  4,  5,
 
 move_table=[1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1]
 
-def str2bin(text):
+def str2bin(text,fill):
 	i_by = bytes(text, encoding = "utf-8")
 	_bin = ''
 	for i_bin in i_by:
@@ -131,18 +131,19 @@ def str2bin(text):
 		i_b = i_b.replace('0b','')
 		i_b = '0' * (8-len(i_b)) + i_b
 		_bin += i_b
-	space_num= int((64-len(_bin))/8)
-	_bin += '00000000'* space_num	
+	if fill:
+		space_num= int((64-len(_bin))/8)
+		_bin += '00000000'* space_num	
 	return _bin
 	# str转为utf8编码的二进制
 	# 由于des加密是64位一加密，中文字节24位，字符18位，为了方便将一个编码统一补全位64位
 	# str_hex = text.encode('utf8')
 	# return bin(int(str_hex.hex(),16))[2:]  #hex to bin
 
-def _str2bin(texts):
+def _str2bin(texts,fill=False):
 	_bin = ''
 	for t in texts:
-		_bin += str2bin(t)
+		_bin += str2bin(t,fill)
 	# space_num= int((len(_bin)%64)/8)
 	# _bin += '00100000'* space_num
 	return _bin
@@ -235,6 +236,9 @@ def des(plaintext,ciphertext):
 	# if encyrpt:
 	# 	plaintext = _str2bin(plaintext)
 	ciphertext = _str2bin(ciphertext)
+	if len(ciphertext) != 64:
+		raise RuntimeError('ciphertext length error')
+
 	# plaintext = '0000000100100011010001010110011110001001101010111100110111101111'
 	swaped_plaintext = swap(plaintext,IP_table)
 	l0 = swaped_plaintext[:32]
@@ -280,7 +284,7 @@ def des(plaintext,ciphertext):
 def _des(text,key,action):
 	result = ''
 	if action == 1:
-		for t in re.findall(r'.{64}',_str2bin(text)):
+		for t in re.findall(r'.{64}',_str2bin(text,True)):
 			t = des(t,key)
 			result += t
 		return result
@@ -294,7 +298,6 @@ def _des(text,key,action):
 					new_result += r
 			result = new_result
 		return result
-
  
 
 app = Flask('des')
