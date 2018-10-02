@@ -300,37 +300,37 @@ def _des(text,key,action):
 		return result
  
 
-app = Flask('des')
+# app = Flask('des')
  
-@app.route('/upload', methods=['POST', 'GET'])
-def upload():
-	if request.method == 'POST':
-		act = request.form.get('encrypt')
-		key = request.form.get('key')
-		f = request.files['file']
-		fname = secure_filename(f.filename)
-		ext = fname.rsplit('.',1)[1]  # 获取文件后缀
-		new_filename = '11'+'.'+ext  # 修改了上传的文件名
-		abspath = os.path.join('static/upload',new_filename)
-		f.save(abspath)  #保存文件到upload目录
-		f = open(abspath)
-		text = ''
-		for line in f.readlines():
-			text += line
-		if act == '加密':
-			t = _des(text,key,1)
-			result = t
-		else:
-			act = '解密'
-			result = _des(text,key,0)
-		return render_template('upload.html',action=act+'结果',result=result)
-	return render_template('upload.html')
+# @app.route('/upload', methods=['POST', 'GET'])
+# def upload():
+# 	if request.method == 'POST':
+# 		act = request.form.get('encrypt')
+# 		key = request.form.get('key')
+# 		f = request.files['file']
+# 		fname = secure_filename(f.filename)
+# 		ext = fname.rsplit('.',1)[1]  # 获取文件后缀
+# 		new_filename = '11'+'.'+ext  # 修改了上传的文件名
+# 		abspath = os.path.join('static/upload',new_filename)
+# 		f.save(abspath)  #保存文件到upload目录
+# 		f = open(abspath)
+# 		text = ''
+# 		for line in f.readlines():
+# 			text += line
+# 		if act == '加密':
+# 			t = _des(text,key,1)
+# 			result = t
+# 		else:
+# 			act = '解密'
+# 			result = _des(text,key,0)
+# 		return render_template('upload.html',action=act+'结果',result=result)
+# 	return render_template('upload.html')
 
 
-if __name__ == '__main__':
-	app.run(debug=True,port=5000)
+# if __name__ == '__main__':
+# 	app.run(debug=True,port=5000)
 
 # 现在计算机中，在内存中采用unicode编码方式。
 # 这是因为t是采用utf-8来编码，而utf-8与unicode编码中的字符部分的编码方式是一样的，
 # 在显示t的时候，在内存中采用unicode解码，而两种编码方式的字符部分一样，因此显示并没有什么区别。
-# utf-8(汉字3字节)与unicode(汉字2字节)汉字部分的编码是不一样的，unicode无法进行解码，因此只能用0，1串来显示。
+# utf-8(汉字3字节)与unicode(汉字2字节)汉字部分的编码是不一样的，unicode无法进行解码，因此只能用0，1串来显示
