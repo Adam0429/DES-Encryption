@@ -23,7 +23,7 @@ class MyFrame(wx.Frame):	#创建自定义Frame
 
 		# self.quitbtn = wx.Button(panel,-1,"send",pos=(500,500))
 		self.sendbtn = wx.Button(panel,-1,"send",pos=(0,230))
-		self.encryptbtn = wx.Button(panel,-1,"encrypt",pos=(200,230))
+		self.encryptbtn = wx.Button(panel,-1,"decrypt",pos=(200,230))
 
 		self.inputText.SetInsertionPoint(0) #设置焦点位置
 		self.sendbtn.Bind(wx.EVT_BUTTON,self.send)   #绑定鼠标进入事件
@@ -47,27 +47,24 @@ class MyFrame(wx.Frame):	#创建自定义Frame
 		while True:
 			# noinspection PyBroadException
 			# try:
-			buffer = self.__socket.recv(1024).decode()
+			
+			buffer = self.__socket.recv(1024).decode()      # 没有消息时这里堵塞
+			result = ''
+			if self.__status:
+				text = self.outputText.GetValue().split('\r')
+				for t in text:
+					if t.strip() != '':
+						result = result + _des(t,self.key.GetValue(),self.__status) + '\n'
+				self.outputText.SetValue(result)
+				self.__status = 0
+				self.encryptbtn.SetLabelText('decrypt')
 			obj = json.loads(buffer)
 			if self.outputText.GetValue().strip() == '':
 				message = str(obj['sender_id']) + ' '+ obj['message']
 			else:
 				message = self.outputText.GetValue()+'\n'+str(obj['sender_id']) + ' '+ obj['message']
 			self.outputText.SetValue(message)
-				# print('[' + str(obj['sender_nickname']) + '(' + str(obj['sender_id']) + ')' + ']', obj['message'])
-			# except Exception:
-			# 	print('[Client] 无法从服务器获取数据')
 
-	def __send_message_thread(self, message):
-		"""
-		发送消息线程
-		:param message: 消息内容
-		"""
-		self.__socket.send(json.dumps({
-			'type': 'broadcast',
-			# 'sender_id': self.__id,
-			'message': _des(str(self.__id)+':'+message,self.key.GetValue(),1)
-		}).encode())
 
 	def start(self):
 		"""
@@ -110,50 +107,51 @@ class MyFrame(wx.Frame):	#创建自定义Frame
 		:param args: 参数
 		"""
 		message = args
-		
-		self.__send_message_thread(message)
-
-	def do_help(self, arg):
-		"""
-		帮助
-		:param arg: 参数
-		"""
-		command = arg.split(' ')[0]
-		if command == '':
-			print('[Help] login nickname - 登录到聊天室，nickname是你选择的昵称')
-			print('[Help] send message - 发送消息，message是你输入的消息')
-		elif command == 'login':
-			print('[Help] login nickname - 登录到聊天室，nickname是你选择的昵称')
-		elif command == 'send':
-			print('[Help] send message - 发送消息，message是你输入的消息')
-		else:
-			print('[Help] 没有查询到你想要了解的指令')
+		self.__socket.send(json.dumps({
+			'type': 'broadcast',
+			# 'sender_id': self.__id,
+			'message': _des(str(self.__id)+':'+message,self.key.GetValue(),1)
+		}).encode())
 
 	def send(self,event):	#注意事件处理函数需要加上事件对象
-		self.do_send(self.inputText.GetValue())
-		# self.Close(True)	#强制退出force=True
-
-	def encrypt(self,event):
 		result = ''
 		if self.__status:
-			print('加密')
 			text = self.outputText.GetValue().split('\r')
 			for t in text:
 				if t.strip() != '':
 					result = result + _des(t,self.key.GetValue(),self.__status) + '\n'
 			self.outputText.SetValue(result)
 			self.__status = 0
-		else:
-			print('解密')
+			self.encryptbtn.SetLabelText('decrypt')
+
+		self.do_send(self.inputText.GetValue())
+		
+		# self.Close(True)	#强制退出force=True
+
+	def encrypt(self,event):
+		result = ''
+		if self.__status:
 			text = self.outputText.GetValue().split('\r')
 			for t in text:
 				if t.strip() != '':
-					if text.index(t) != len(text) - text.count('') - 1: #为了解密完回来少一个空行
-						result = result + _des(t,self.key.GetValue(),self.__status) + '\n'
-					else:
-						result = result + _des(t,self.key.GetValue(),self.__status)
+					result = result + _des(t,self.key.GetValue(),self.__status) + '\n'
+			self.outputText.SetValue(result)
+			self.__status = 0
+			self.encryptbtn.SetLabelText('decrypt')
+
+		else:
+			text = self.outputText.GetValue().split('\r')
+			print(text)
+			for t in text:
+				if t.strip() != '':
+					# if text.index(t) != len(text) - text.count('') - 1: #为了解密完回来少一个空行
+					result = result + _des(t,self.key.GetValue(),self.__status) + '\n'
+					# else:
+						# result = result + _des(t,self.key.GetValue(),self.__status)
 			self.outputText.SetValue(result)
 			self.__status = 1
+			self.encryptbtn.SetLabelText('encrypt')
+
 
 class MyApp(wx.App):
 	def OnInit(self):
